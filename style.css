@@ -1,0 +1,762 @@
+:root {
+      --bg: #071521;
+      --card: rgba(255,255,255,0.07);
+      --card-border: rgba(255,255,255,0.15);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --brand: #7dd3fc;
+  }
+
+  *, *::before, *::after {
+      box-sizing: border-box;
+  }
+
+  body {
+      font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 10% 10%, #0f172a 0%, var(--bg) 55%);
+      color: var(--text);
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+  }
+
+    .menu {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .menu button {
+            padding: 10px 22px;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.25);
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+    }
+
+    .menu button:hover {
+            background: rgba(14, 165, 233, 0.35);
+            border-color: var(--accent);
+            color: white;
+    }
+
+    .menu button.active {
+            background: var(--accent);
+            border-color: var(--accent-strong);
+            color: #0f172a;
+            box-shadow: 0 8px 18px rgba(56, 189, 248, 0.4);
+    }
+
+    .menu button:hover {
+            background: #0ea5e9;
+    }
+
+    .menu button.active {
+            background: #0284c7;
+    }
+
+    .content {
+            flex: 1;
+                display: flex;
+                    justify-content: center;
+                        align-items: center;
+                            padding: 20px;
+    }
+
+    .section {
+            display: none;
+                max-width: 600px;
+                    width: 100%;
+    }
+
+    .section.active {
+            display: block;
+    }
+
+    h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            margin: 18px 0 14px;
+            text-shadow: none;
+            font-family: 'SF Pro Display', 'SF Pro Text', 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.02em;
+            font-variant-numeric: tabular-nums lining-nums;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+    #dateDisplay {
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 500;
+            margin: 0;
+    }
+
+    #timeZoneSelect {
+            padding: 5px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.9rem;
+    }
+
+    .clock-container {
+            display: flex;
+                flex-direction: column;
+                    align-items: center;
+                        gap: 30px;
+                        position: relative;
+    }
+
+    .analog-clock {
+            position: relative;
+                width: 300px;
+                    height: 300px;
+                        border-radius: 50%;
+                            background: #1e293b;
+                                box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+                                    border: 5px solid #38bdf8;
+    }
+
+    .analog-clock::after {
+            content: '';
+                position: absolute;
+                    top: 50%;
+                        left: 50%;
+                            width: 15px;
+                                height: 15px;
+                                    background: #38bdf8;
+                                        border-radius: 50%;
+                                            transform: translate(-50%, -50%);
+                                                z-index: 10;
+    }
+
+    .hand {
+            position: absolute;
+                bottom: 50%;
+                    left: 50%;
+                        transform-origin: bottom center;
+                            border-radius: 50% 50% 0 0;
+                                transform: translateX(-50%);
+    }
+
+    .hour-hand {
+            width: 10px;
+                height: 80px;
+                    background: #ffffff;
+                        top: 70px;
+    }
+
+    .minute-hand {
+            width: 6px;
+                height: 110px;
+                    background: #38bdf8;
+                        top: 40px;
+    }
+
+    .second-hand {
+            width: 2px;
+                height: 130px;
+                    background: #ef4444;
+                        top: 20px;
+    }
+
+    .numbers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            font-family: 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-variant-numeric: tabular-nums lining-nums;
+            -webkit-font-smoothing: antialiased;
+            text-shadow: 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    .numbers div {
+            position: absolute;
+                transform: translate(-50%, -50%);
+    }
+
+    .container {
+            display: grid;
+                grid-template-columns: 1fr;
+                    gap: 20px;
+                        max-width: 400px;
+                            margin: auto;
+    }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(12px);
+            padding: 20px;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.30);
+    }
+
+          button {
+                padding: 8px 12px;
+                    margin: 5px;
+                        border: none;
+                            border-radius: 8px;
+                                background: #38bdf8;
+                                    color: black;
+                                        cursor: pointer;
+                                        transition: background 0.3s;
+                                        font-weight: 500;
+          }
+
+            button:hover {
+                    background: #0ea5e9;
+            }
+
+            button[onclick*="restart"],
+            button[onclick*="restartTimer"],
+            button[onclick*="resetSW"] {
+                background: #f59e0b;
+                color: black;
+            }
+
+            button[onclick*="restart"]:hover,
+            button[onclick*="restartTimer"]:hover,
+            button[onclick*="resetSW"]:hover {
+                background: #d97706;
+            }
+
+            button[onclick*="lapSW"]
+            {
+                background: #a855f7;
+                color: white;
+            }
+
+            button[onclick*="lapSW"]:hover {
+                background: #9333ea;
+            }
+
+            button[onclick*="snooze"] {
+                background: #a855f7;
+                color: white;
+            }
+
+            button[onclick*="snooze"]:hover {
+                background: #9333ea;
+            }
+
+            button.stop-button {
+                background: #ef4444;
+                color: #fff;
+            }
+
+            button.stop-button:hover {
+                background: #dc2626;
+            }
+
+            .timer-inputs input {
+                width: 80px;
+                padding: 15px;
+                text-align: center;
+                font-size: 20px;
+                border: 2px solid #334155;
+                border-radius: 8px;
+                background: #0f172a;
+                color: #e2e8f0;
+                transition: all 0.3s;
+            }
+
+            .timer-inputs input:focus {
+                outline: none;
+                border-color: #38bdf8;
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+            }
+
+            #timerDisplay {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: white;
+                margin: 20px 0;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                font-family: 'Orbitron', monospace;
+            }
+
+            #swDisplay {
+                font-size: 2.5rem;
+                font-weight: bold;
+                color: white;
+                margin: 20px 0;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                font-family: 'Orbitron', monospace;
+            }
+
+            .card button {
+                padding: 10px 16px;
+                margin: 6px;
+                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                color: black;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .card button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            }
+
+            .card button[onclick*="Restart"],
+            .card button[onclick*="restart"],
+            .card button[onclick*="Reset"],
+            .card button[onclick*="reset"] {
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                color: black;
+            }
+
+            .card button[onclick*="Restart"]:hover,
+            .card button[onclick*="restart"]:hover,
+            .card button[onclick*="Reset"]:hover,
+            .card button[onclick*="reset"]:hover {
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            }
+
+            .card button.stop-button {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+            }
+
+            .card button.stop-button:hover {
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            }
+
+            .card button[onclick*="Lap"] {
+                background: linear-gradient(135deg, #a855f7, #9333ea);
+                color: white;
+            }
+
+            .card button[onclick*="Lap"]:hover {
+                box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+            }
+
+            #alarmOverlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: rgba(0, 0, 0, 0.85);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+
+            #alarmOverlay button {
+                font-size: 24px;
+                padding: 18px 30px;
+                background: #ef4444;
+                border: none;
+                border-radius: 10px;
+                color: white;
+                cursor: pointer;
+            }
+
+            #alarmForm {
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+                padding: 20px;
+                border-radius: 12px;
+                border-left: 4px solid #38bdf8;
+            }
+
+            #alarmForm label {
+                display: block;
+                margin: 12px 0 6px 0;
+                font-weight: 600;
+                font-size: 14px;
+                color: #e2e8f0;
+                text-align: left;
+            }
+
+            #alarmForm input[type="text"],
+            #alarmForm input[type="time"],
+            #alarmForm input[type="number"],
+            #alarmForm select {
+                width: 100%;
+                padding: 10px 12px;
+                margin-bottom: 12px;
+                border: 2px solid #334155;
+                border-radius: 8px;
+                background: #0f172a;
+                color: #e2e8f0;
+                font-size: 14px;
+                box-sizing: border-box;
+                transition: all 0.3s;
+            }
+
+            #alarmForm input[type="text"]:focus,
+            #alarmForm input[type="time"]:focus,
+            #alarmForm input[type="number"]:focus,
+            #alarmForm select:focus {
+                outline: none;
+                border-color: #38bdf8;
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+            }
+
+            #alarmForm input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+                margin-right: 6px;
+            }
+
+            #weekdayBoxes {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin: 12px 0;
+                padding: 12px;
+                background: rgba(15, 23, 42, 0.5);
+                border-radius: 8px;
+            }
+
+            #weekdayBoxes label {
+                display: flex;
+                align-items: center;
+                margin: 0;
+                font-weight: normal;
+                padding: 6px 10px;
+                background: rgba(56, 189, 248, 0.1);
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            #weekdayBoxes label:hover {
+                background: rgba(56, 189, 248, 0.2);
+            }
+
+            #showAlarmFormButton {
+                width: 100%;
+                padding: 12px;
+                margin: 10px 0;
+                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                color: black;
+                font-weight: bold;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            #showAlarmFormButton:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            }
+
+            #alarmBackBtn {
+                background: rgba(107, 114, 128, 0.8) !important;
+                color: white !important;
+                font-weight: 600 !important;
+            }
+
+            #alarmBackBtn:hover {
+                background: #6b7280 !important;
+            }
+
+            #alarmSaveBtn {
+                width: 100%;
+                padding: 12px;
+                margin: 12px 0 8px 0;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            #alarmSaveBtn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            }
+
+            #alarmCancelBtn {
+                width: 100%;
+                padding: 12px;
+                background: #6b7280 !important;
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            #alarmCancelBtn:hover {
+                transform: translateY(-2px);
+                background: #4b5563 !important;
+            }
+
+            #alarmList {
+                list-style: none;
+                padding: 0;
+                margin: 16px 0;
+            }
+
+            #alarmList li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px;
+                margin: 8px 0;
+                background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.5));
+                border-left: 3px solid #38bdf8;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                font-family: 'Orbitron', monospace;
+                transition: all 0.3s;
+            }
+
+            #alarmList li:hover {
+                background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(30, 41, 59, 0.6));
+                transform: translateX(4px);
+            }
+
+            #alarmList button {
+                padding: 6px 12px;
+                margin: 0 4px;
+                font-size: 12px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.3s;
+                font-weight: 500;
+            }
+
+            #alarmList button[onclick*="editAlarm"] {
+                background: #d97706;
+                color: white;
+            }
+
+            #alarmList button[onclick*="editAlarm"]:hover {
+                background: #b45309;
+                transform: scale(1.05);
+            }
+
+            #alarmList button[onclick*="removeAlarm"] {
+                background: #ef4444;
+                color: white;
+            }
+
+            #alarmList button[onclick*="removeAlarm"]:hover {
+                background: #dc2626;
+                transform: scale(1.05);
+            }
+
+            /* WEATHER STYLES */
+            .weather-result {
+                margin-top: 10px;
+            }
+
+            .weather-card {
+                background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(15, 23, 42, 0.6));
+                border-radius: 16px;
+                padding: 24px;
+                border: 1px solid rgba(56, 189, 248, 0.3);
+            }
+
+            .weather-card h3 {
+                margin: 0 0 10px 0;
+                font-size: 1.4rem;
+            }
+
+            .weather-icon {
+                font-size: 64px;
+                margin: 10px 0;
+            }
+
+            .weather-temp {
+                font-size: 3rem;
+                font-weight: 700;
+                color: #38bdf8;
+                margin: 10px 0;
+            }
+
+            .weather-desc {
+                font-size: 1.1rem;
+                color: #94a3b8;
+                margin: 5px 0 15px 0;
+            }
+
+            .weather-details {
+                display: flex;
+                justify-content: center;
+                gap: 30px;
+                font-size: 1rem;
+                color: #e2e8f0;
+            }
+
+            .forecast-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 10px;
+                max-height: 400px;
+                overflow-y: auto;
+                padding: 10px;
+            }
+
+            .forecast-item {
+                background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.4));
+                border-radius: 12px;
+                padding: 12px 8px;
+                text-align: center;
+                border: 1px solid rgba(56, 189, 248, 0.2);
+                transition: transform 0.2s;
+            }
+
+            .forecast-item:hover {
+                transform: scale(1.05);
+            }
+
+            .forecast-time {
+                font-weight: 700;
+                font-size: 1rem;
+                color: #38bdf8;
+            }
+
+            .forecast-day {
+                font-size: 0.7rem;
+                color: #94a3b8;
+                margin-bottom: 5px;
+            }
+
+            .forecast-icon {
+                font-size: 28px;
+                margin: 5px 0;
+            }
+
+            .forecast-temp {
+                font-weight: 600;
+                font-size: 1.1rem;
+                color: #fff;
+            }
+
+            /* MAP STYLES */
+            .map-controls {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .map-btn {
+                padding: 10px 18px;
+                border: none;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                color: #0f172a;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .map-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            }
+
+            .map-btn.active {
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+            }
+
+            .map-container {
+                position: relative;
+                overflow: hidden;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+                width: 500px;
+                height: 500px;
+                margin: 0 auto;
+            }
+
+            #mapDiv {
+                width: 100%;
+                height: 100%;
+                border-radius: 12px;
+            }
+
+            .map-overlay {
+                position: absolute;
+                top: 15px;
+                left: 15px;
+                right: 15px;
+                display: flex;
+                gap: 10px;
+                z-index: 1000;
+            }
+
+            .map-overlay input {
+                flex: 1;
+                padding: 12px 15px;
+                border: none;
+                border-radius: 25px;
+                background: rgba(255, 255, 255, 0.95);
+                color: #0f172a;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            .map-overlay input:focus {
+                outline: none;
+                box-shadow: 0 4px 15px rgba(56, 189, 248, 0.5);
+            }
+
+            .map-overlay button {
+                padding: 12px 20px;
+                border: none;
+                border-radius: 25px;
+                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                color: #0f172a;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+
+            .map-error {
+                position: absolute;
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+                text-align: center;
+                z-index: 1000;
+            }
