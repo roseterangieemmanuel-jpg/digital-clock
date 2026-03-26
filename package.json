@@ -1,0 +1,22 @@
+{
+  "name": "digital-clock-main",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/Lazy-Shadow/digital-clock#readme",
+  "bugs": {
+    "url": "https://github.com/Lazy-Shadow/digital-clock/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lazy-Shadow/digital-clock.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node index.js"
+  }
+}

@@ -582,181 +582,78 @@
                 transform: scale(1.05);
             }
 
-            /* WEATHER STYLES */
-            .weather-result {
-                margin-top: 10px;
-            }
-
-            .weather-card {
-                background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(15, 23, 42, 0.6));
-                border-radius: 16px;
-                padding: 24px;
-                border: 1px solid rgba(56, 189, 248, 0.3);
-            }
-
-            .weather-card h3 {
-                margin: 0 0 10px 0;
-                font-size: 1.4rem;
-            }
-
-            .weather-icon {
-                font-size: 64px;
-                margin: 10px 0;
-            }
-
-            .weather-temp {
-                font-size: 3rem;
-                font-weight: 700;
-                color: #38bdf8;
-                margin: 10px 0;
-            }
-
-            .weather-desc {
-                font-size: 1.1rem;
-                color: #94a3b8;
-                margin: 5px 0 15px 0;
-            }
-
-            .weather-details {
-                display: flex;
-                justify-content: center;
-                gap: 30px;
-                font-size: 1rem;
-                color: #e2e8f0;
-            }
-
-            .forecast-container {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                gap: 10px;
-                max-height: 400px;
-                overflow-y: auto;
+            #weatherLoading, #mapLoading {
+                color: var(--muted);
+                font-size: 14px;
                 padding: 10px;
             }
 
-            .forecast-item {
-                background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.4));
+            #weatherError, #mapError {
+                padding: 10px;
+                border-radius: 8px;
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid rgba(239, 68, 68, 0.3);
+            }
+
+            #weatherCurrent {
+                background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(15, 23, 42, 0.5));
+                padding: 20px;
                 border-radius: 12px;
-                padding: 12px 8px;
-                text-align: center;
-                border: 1px solid rgba(56, 189, 248, 0.2);
-                transition: transform 0.2s;
+                border: 1px solid rgba(56, 189, 248, 0.3);
             }
 
-            .forecast-item:hover {
-                transform: scale(1.05);
+            #weatherTemp {
+                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
 
-            .forecast-time {
-                font-weight: 700;
-                font-size: 1rem;
-                color: #38bdf8;
+            #weatherDesc {
+                color: var(--text);
+                font-weight: 500;
+            }
+
+            #weatherLocation {
+                color: var(--muted);
+                font-size: 14px;
+            }
+
+            #forecastTitle {
+                color: var(--text);
+                margin-top: 20px;
             }
 
             .forecast-day {
-                font-size: 0.7rem;
-                color: #94a3b8;
-                margin-bottom: 5px;
+                background: rgba(255, 255, 255, 0.05);
+                padding: 12px;
+                border-radius: 10px;
+                min-width: 80px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
 
-            .forecast-icon {
-                font-size: 28px;
-                margin: 5px 0;
-            }
-
-            .forecast-temp {
+            .forecast-day-name {
                 font-weight: 600;
-                font-size: 1.1rem;
-                color: #fff;
+                color: var(--muted);
+                font-size: 12px;
             }
 
-            /* MAP STYLES */
-            .map-controls {
-                display: flex;
-                justify-content: center;
-                gap: 10px;
-                margin-bottom: 15px;
+            .forecast-day-temp {
+                font-size: 18px;
+                font-weight: bold;
+                color: var(--text);
+                margin: 6px 0;
             }
 
-            .map-btn {
-                padding: 10px 18px;
-                border: none;
-                border-radius: 8px;
-                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-                color: #0f172a;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s;
+            .forecast-day-icon {
+                font-size: 24px;
             }
 
-            .map-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            #mapContainer {
+                border: 2px solid rgba(56, 189, 248, 0.3);
             }
 
-            .map-btn.active {
-                background: linear-gradient(135deg, #10b981, #059669);
-                color: white;
-            }
-
-            .map-container {
-                position: relative;
-                overflow: hidden;
+            .leaflet-container {
                 border-radius: 12px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-                width: 500px;
-                height: 500px;
-                margin: 0 auto;
-            }
-
-            #mapDiv {
-                width: 100%;
-                height: 100%;
-                border-radius: 12px;
-            }
-
-            .map-overlay {
-                position: absolute;
-                top: 15px;
-                left: 15px;
-                right: 15px;
-                display: flex;
-                gap: 10px;
-                z-index: 1000;
-            }
-
-            .map-overlay input {
-                flex: 1;
-                padding: 12px 15px;
-                border: none;
-                border-radius: 25px;
-                background: rgba(255, 255, 255, 0.95);
-                color: #0f172a;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-
-            .map-overlay input:focus {
-                outline: none;
-                box-shadow: 0 4px 15px rgba(56, 189, 248, 0.5);
-            }
-
-            .map-overlay button {
-                padding: 12px 20px;
-                border: none;
-                border-radius: 25px;
-                background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-                color: #0f172a;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-
-            .map-error {
-                position: absolute;
-                bottom: 15px;
-                left: 15px;
-                right: 15px;
-                text-align: center;
-                z-index: 1000;
+                font-family: inherit;
             }

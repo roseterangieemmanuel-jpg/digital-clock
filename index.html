@@ -7,9 +7,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -24,7 +23,8 @@
     </div>
 
     <div class="menu">
-        <button onclick="showSection('home')" class="active">Home</button>
+        <button onclick="showSection('home')" class="active">World Clock</button>
+        
         <button onclick="showSection('alarm')">Alarm</button>
         <button onclick="showSection('timer')">Timer</button>
         <button onclick="showSection('stopwatch')">Stopwatch</button>
@@ -61,7 +61,47 @@
             </div>
         </div>
 
-        <!-- ALARM -->
+        <!-- WEATHER -->
+        <div id="weather" class="section">
+            <div class="container">
+                <div class="card">
+                    <h2>Weather</h2>
+                    <div id="weatherLoading" style="display:none; margin: 10px 0;">Detecting location and loading weather...</div>
+                    <div id="weatherError" style="display:none; color: #ff6b6b; margin: 10px 0;"></div>
+                    <div id="weatherCurrent" style="display:none; margin: 15px 0;">
+                        <div style="text-align: center; font-size: 48px; font-weight: bold;">
+                            <span id="weatherTemp">--</span>°C
+                        </div>
+                        <div style="text-align: center; font-size: 18px; margin: 10px 0;">
+                            <span id="weatherDesc">--</span>
+                        </div>
+                        <div style="text-align: center; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                            <div>💧 <span id="weatherHumidity">--</span>%</div>
+                            <div>💨 <span id="weatherWind">--</span> km/h</div>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px;">
+                            📍 <span id="weatherLocation">--</span>
+                        </div>
+                    </div>
+                    <h3 id="forecastTitle" style="display:none;">7-Day Forecast</h3>
+                    <div id="weatherForecast" style="display:none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAP -->
+        <div id="map" class="section">
+            <div class="container">
+                <div class="card">
+                    <h2>Map</h2>
+                    <div id="mapLoading" style="display:none; margin: 10px 0;">Detecting location and loading map...</div>
+                    <div id="mapError" style="display:none; color: #ff6b6b; margin: 10px 0;"></div>
+                    <div id="mapContainer" style="display:none; height: 400px; border-radius: 12px; margin-top: 15px;">
+                        <div id="map" style="height: 100%; width: 100%; border-radius: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="alarm" class="section">
             <div class="container">
                 <div class="card">
@@ -77,13 +117,13 @@
                         <label>Time:<br><input type="time" id="alarmInput"></label><br>
                         <label>Sound:<br>
                             <select id="alarmSoundChoice">
+                                <option value="audio/iPhone-Alarm-Original.mp3">iPhone Alarm</option>
+                                <option value="audio/Otlum Peejay Dela Cruz Nagmumura.mp3">Otlum Peejay</option>
+                                <option value="audio/Screen Recording.mp3">Screen Recording</option>
+                                <option value="audio/TikTok Sound.mp3">TikTok Sound</option>
                                 <option
-                                    value="file:///C:/Users/Admin/Music/Otlum%20Peejay%20Dela%20Cruz%20Nagmumura.mp3">
-                                    Personal track</option>
-                                <option value="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3">Bell ring
-                                </option>
-                                <option value="https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3">Bell ring 2
-                                </option>
+                                    value="audio/🗣️ Enrique Meme Sound Effect (Original and Slowed Version) No Copyright [sDaZSyrlPN4].mp3">
+                                    Enrique Meme Sound Effect</option>
                             </select>
                         </label><br>
                         <label>Repeat daily:<input type="checkbox" id="alarmRepeat"></label><br>
@@ -120,6 +160,17 @@
                         <span>:</span>
                         <input type="number" id="timerSec" placeholder="00" min="0">
                     </div>
+                    <label>Sound:<br>
+                        <select id="timerSoundChoice">
+                            <option value="audio/iPhone-Alarm-Original.mp3">iPhone Alarm</option>
+                            <option value="audio/Otlum Peejay Dela Cruz Nagmumura.mp3">Otlum Peejay</option>
+                            <option value="audio/Screen Recording.mp3">Screen Recording</option>
+                            <option value="audio/TikTok Sound.mp3">TikTok Sound</option>
+                            <option
+                                value="audio/🗣️ Enrique Meme Sound Effect (Original and Slowed Version) No Copyright [sDaZSyrlPN4].mp3">
+                                Enrique Meme Sound Effect</option>
+                        </select>
+                    </label><br>
                     <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
                         <button onclick="startTimer()">Start</button>
                         <button class="stop-button" onclick="stopTimer()">Stop</button>
@@ -145,46 +196,15 @@
             </div>
         </div>
 
-        <!-- WEATHER -->
-        <div id="weather" class="section">
-            <div class="container">
-                <div class="card">
-                    <h2>Weather</h2>
-                    <div id="weatherResult" class="weather-result"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MAP -->
-        <div id="map" class="section">
-            <div class="container">
-                <div class="card">
-                    <h2>Map</h2>
-                    <div class="map-controls">
-                        <button onclick="myMapLocation()" class="map-btn">My Location</button>
-                        <button onclick="toggleSatellite()" id="satelliteBtn" class="map-btn">Satellite</button>
-                    </div>
-                    <div class="map-container">
-                        <div id="mapDiv" style="width:100%;height:100%;border-radius:12px;"></div>
-                        <div class="map-overlay">
-                            <input type="text" id="locationInput" placeholder="Search location...">
-                            <button onclick="searchLocation()">Search</button>
-                        </div>
-                        <div id="mapError" class="map-error"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
 
 
 
     <!-- SOUND -->
-    <audio id="alarmSound">
-        <source src="file:///C:/Users/Admin/Music/Otlum%20Peejay%20Dela%20Cruz%20Nagmumura.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="alarmSound" src="audio/iPhone-Alarm-Original.mp3"></audio>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script src="script.js"></script>
 
