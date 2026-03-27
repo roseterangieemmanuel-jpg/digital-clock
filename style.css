@@ -113,22 +113,116 @@ h1 {
     margin: 0;
 }
 
-#timeZoneSelect {
-    /* color: white; */
-    padding: 5px;
-    border-radius: 8px;
-    background: rgba(243, 240, 240, 0.885);
-    /* color: var(--text);    */
-    border: 1px solid rgba(255, 255, 255, 0.3);
+.timezone-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#currentTimeZoneLabel {
     font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+#openTimeZoneBtn {
+    background: var(--accent);
+    color: #0f172a;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s;
+}
+
+#openTimeZoneBtn:hover {
+    transform: scale(1.1);
+    background: var(--accent-strong);
+}
+
+.tz-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 10px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 8px;
+}
+
+.tz-item {
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tz-item-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-left: 10px;
+}
+
+.tz-item:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--accent);
+}
+
+.tz-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tz-list-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tz-list-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.tz-list-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#timeZoneSelect {
+    display: none;
 }
 
 .clock-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
     position: relative;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.home-main-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    width: 100%;
 }
 
 .analog-clock {
@@ -143,7 +237,7 @@ h1 {
     width: 320px;
     height: 320px;
     position: relative;
-    margin: 30px 0;
+    margin: 0;
 }
 
 /* ---------- MODAL STYLES ---------- */
@@ -809,8 +903,19 @@ button.stop-button:hover {
     margin: 6px 0;
 }
 
-.forecast-day-icon {
-    font-size: 24px;
+.forecast-day-icon img,
+.world-clock-icon img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+#weatherMainIcon img {
+    width: 100px !important;
+    height: 100px !important;
+    margin: 0 auto;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
 }
 
 #mapContainer {
@@ -836,4 +941,78 @@ button.stop-button:hover {
     font-family: 'SF Pro Text', sans-serif;
     text-align: center;
     min-width: 100px;
+}
+
+/* ---------- WORLD CLOCK LIST ---------- */
+.world-clock-section {
+    flex: 1;
+    min-width: 320px;
+    max-width: 450px;
+    margin-top: 0;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    align-self: flex-start;
+}
+
+.world-clock-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.world-clock-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    transition: all 0.2s;
+}
+
+.world-clock-item:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(4px);
+    cursor: pointer;
+}
+
+.world-clock-info {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.world-clock-city {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.world-clock-details {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.world-clock-time {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.delete-city-btn {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+}
+
+.delete-city-btn:hover {
+    background: rgba(239, 68, 68, 0.4) !important;
 }

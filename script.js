@@ -1,5 +1,34 @@
 let currentTimeZone = 'local';
 let alarms = JSON.parse(localStorage.getItem("alarms")) || [];
+let worldClockCities = JSON.parse(localStorage.getItem("worldClockCities")) || [];
+
+// Pre-populate with Abidjan as in the user's example if empty
+if (worldClockCities.length === 0) {
+    addInitialCity('Abidjan', 5.36, -4.00);
+}
+
+async function addInitialCity(name, lat, lon) {
+    try {
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+        const weatherData = await weatherRes.json();
+        const timezone = weatherData.timezone;
+
+        const newCity = {
+            name: name,
+            lat: lat,
+            lon: lon,
+            timezone: timezone,
+            temp: Math.round(weatherData.current.temperature_2m),
+            weather_code: weatherData.current.weather_code
+        };
+
+        if (!worldClockCities.some(c => c.name === newCity.name)) {
+            worldClockCities.push(newCity);
+            localStorage.setItem("worldClockCities", JSON.stringify(worldClockCities));
+            renderWorldClockList();
+        }
+    } catch (e) { console.error(e); }
+}
 let editingAlarmIndex = null;
 let currentRingingAlarm = null;
 let currentNotificationType = null;
@@ -135,6 +164,110 @@ window.addEventListener('click', (event) => {
     }
 });
 
+/* ---------- WORLD CLOCK LIST ---------- */
+function removeWorldClockCity(index) {
+    worldClockCities.splice(index, 1);
+    localStorage.setItem("worldClockCities", JSON.stringify(worldClockCities));
+    renderWorldClockList();
+}
+
+function formatWorldClockTime(timezone) {
+    const now = new Date();
+    const options = {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    };
+    
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(now);
+    
+    let hour = parts.find(p => p.type === 'hour').value;
+    let minute = parts.find(p => p.type === 'minute').value;
+    let dayPeriod = parts.find(p => p.type === 'dayPeriod').value;
+    
+    // User wants "!!:34 Am" format. The !! is literal.
+    return `!!:${minute} ${dayPeriod.charAt(0).toUpperCase()}${dayPeriod.charAt(1).toLowerCase()}`;
+}
+
+function getTimeOffsetDescription(timezone) {
+    const now = new Date();
+    const localTime = now.getTime();
+    
+    // Get target time in the target timezone
+    const targetString = now.toLocaleString('en-US', { timeZone: timezone });
+    const targetDate = new Date(targetString);
+    const targetTime = targetDate.getTime();
+    
+    // Difference in hours
+    const diffMs = targetTime - localTime;
+    const diffHrs = Math.round(diffMs / (1000 * 60 * 60));
+    
+    if (diffHrs === 0) return "Same as local";
+    if (diffHrs > 0) return `${diffHrs} hours ahead`;
+    return `${Math.abs(diffHrs)} hours behind`;
+}
+
+function getGMTShort(timezone) {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        timeZoneName: 'longOffset'
+    });
+    const parts = formatter.formatToParts(now);
+    const offset = parts.find(p => p.type === 'timeZoneName').value;
+    return offset.replace('GMT', 'GMT ').replace('+', '+').replace('-', '-');
+}
+
+function renderWorldClockList() {
+    const list = document.getElementById("worldClockList");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    worldClockCities.forEach((city, index) => {
+        const now = new Date();
+        const cityDate = new Date(now.toLocaleString('en-US', { timeZone: city.timezone }));
+        
+        let month = cityDate.toLocaleString('en-US', { month: 'short', timeZone: city.timezone });
+        const day = cityDate.getDate();
+        
+        const timeStr = formatWorldClockTime(city.timezone);
+        const offsetStr = getTimeOffsetDescription(city.timezone);
+        const gmtStr = getGMTShort(city.timezone);
+        
+        const li = document.createElement("li");
+        li.className = "world-clock-item";
+        li.style.cursor = "pointer"; // Indicate clickability
+        li.onclick = (e) => {
+            // Only zoom if not clicking the delete button
+            if (!e.target.classList.contains('delete-city-btn')) {
+                if (city.lat !== undefined && city.lon !== undefined) {
+                    zoomToLocation(city.lat, city.lon);
+                }
+            }
+        };
+        
+        // Get icon for city based on its temperature/code if available, else default
+        const cityIcon = getWeatherIcon(city.weather_code || 0);
+        
+        li.innerHTML = `
+            <div class="world-clock-info">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="world-clock-icon">${cityIcon}</div>
+                    <span class="world-clock-city">${city.name}, ${gmtStr}</span>
+                </div>
+                <span class="world-clock-details">
+                    ${city.temp}° ${month} ${day}, ${offsetStr} ${timeStr}
+                </span>
+            </div>
+            <button class="delete-city-btn" onclick="removeWorldClockCity(${index})">Delete</button>
+        `;
+        list.appendChild(li);
+    });
+}
+
 /* ---------- ANALOG CLOCK ---------- */
 function updateAnalogClock() {
   // Disabled - using 3D Earth instead
@@ -147,9 +280,9 @@ function setClockNumbers() {
 /* ---------- DIGITAL CLOCK ---------- */
 function updateClockDisplay() {
     const now = new Date();
-    const options = currentTimeZone === 'local' ? {} : { timeZone: currentTimeZone };
-    const time = now.toLocaleTimeString([], options);
-    const date = now.toLocaleDateString([], options);
+    // Main clock always displays local time as requested
+    const time = now.toLocaleTimeString([]);
+    const date = now.toLocaleDateString([]);
     
     document.getElementById('clock').innerText = time;
     document.getElementById('dateDisplay').innerText = date;
@@ -167,51 +300,21 @@ const timeZoneCoords = {
     'UTC': { lat: 51.4772, lon: 0.0 }
 };
 
-function updateTimeZone() {
-    currentTimeZone = document.getElementById('timeZoneSelect').value;
-    updateClockDisplay();
-    
-    const coords = timeZoneCoords[currentTimeZone];
-    if (coords && earthScene) {
-        zoomToLocation(coords.lat, coords.lon);
-    }
-}
-
 function zoomToLocation(lat, lon) {
     if (!earthMesh || !earthCamera) return;
     
     // Hide auto rotate
     autoRotate = false;
     
-    // Calculate target rotation
-    const targetLon = -lon * (Math.PI / 180);
-    const targetLat = lat * (Math.PI / 180);
-    
-    // Animate rotation
-    const startRotation = { x: earthMesh.rotation.x, y: earthMesh.rotation.y };
-    let progress = 0;
-    
-    const animateRotation = setInterval(() => {
-        progress += 0.03;
-        if (progress >= 1) {
-            clearInterval(animateRotation);
-            return;
-        }
-        const eased = 1 - Math.pow(1 - progress, 3);
-        earthMesh.rotation.y = startRotation.y + (targetLon - startRotation.y) * eased;
-        earthMesh.rotation.x = startRotation.x + (targetLat * 0.5 - startRotation.x) * eased;
-    }, 16);
-    
-    // Update marker
-    if (earthMarker) {
-        earthMarker.visible = true;
-        const position = latLonToVector3(lat, lon, 1.55);
-        earthMarker.position.copy(position);
-        earthMarker.lookAt(0, 0, 0);
+    // Use updateMarker which already has rotation animation and marker placement
+    if (typeof updateMarker === 'function') {
+        updateMarker(lat, lon);
     }
     
     // Zoom in effect
-    animateZoom(5, 3);
+    if (typeof animateZoom === 'function') {
+        animateZoom(earthCamera.position.z, 4);
+    }
 }
 
 function zoomIn() {
@@ -498,9 +601,272 @@ function lapSW() {
 }
 
 /* ---------- CLOCK UPDATES ---------- */
+function openTimeZoneModal() {
+    document.getElementById('timeZoneModal').style.display = 'flex';
+    populateTimeZoneList();
+}
+
+function closeTimeZoneModal() {
+    document.getElementById('timeZoneModal').style.display = 'none';
+}
+
+function populateTimeZoneList() {
+    const container = document.getElementById('tzListContainer');
+    if (!container) return;
+    
+    // Clear current
+    container.innerHTML = "";
+    
+    const now = new Date();
+    
+    // 1. Add Local Time item with its info
+    const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: localTz,
+        timeZoneName: 'longOffset',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+    const localParts = localFormatter.formatToParts(now);
+    const localOffset = localParts.find(p => p.type === 'timeZoneName').value.replace('GMT', 'GMT ').replace('+', '+').replace('-', '-');
+    const localTime = localParts.filter(p => p.type !== 'timeZoneName').map(p => p.value).join('').trim();
+    
+    const localItem = document.createElement('div');
+    localItem.className = 'tz-item';
+    localItem.setAttribute('data-tz', 'local');
+    localItem.innerHTML = `
+        <span class="tz-item-info">Local Time (${localTz.split('/').pop().replace(/_/g, ' ')}), ${localOffset}</span>
+        <span class="tz-item-time">${localTime}</span>
+    `;
+    localItem.onclick = () => selectTimeZone('local', 'Local Time');
+    container.appendChild(localItem);
+
+    // 2. Add all other timezones
+    const timezones = Intl.supportedValuesOf('timeZone');
+    
+    // Mapping for common timezones to countries for "missing texts"
+    const tzToCountry = {
+        'Africa/Abidjan': " Cote d'Ivolre",
+        'Africa/Accra': " Ghana",
+        'Africa/Addis_Ababa': " Ethiopia",
+        'Africa/Algiers': " Algeria",
+        'Africa/Asmara': " Eritrea",
+        'Africa/Bamako': " Mali",
+        'Africa/Bangui': " Central African Republic",
+        'Africa/Banjul': " Gambia",
+        'Africa/Bissau': " Guinea-Bissau",
+        'Africa/Blantyre': " Malawi",
+        'Africa/Brazzaville': " Congo",
+        'Africa/Bujumbura': " Burundi",
+        'Africa/Cairo': " Egypt",
+        'Africa/Casablanca': " Morocco",
+        'Africa/Ceuta': " Spain",
+        'Africa/Conakry': " Guinea",
+        'Africa/Dakar': " Senegal",
+        'Africa/Dar_es_Salaam': " Tanzania",
+        'Africa/Djibouti': " Djibouti",
+        'Africa/Douala': " Cameroon",
+        'Africa/El_Aaiun': " Western Sahara",
+        'Africa/Freetown': " Sierra Leone",
+        'Africa/Gaborone': " Botswana",
+        'Africa/Harare': " Zimbabwe",
+        'Africa/Johannesburg': " South Africa",
+        'Africa/Juba': " South Sudan",
+        'Africa/Kampala': " Uganda",
+        'Africa/Khartoum': " Sudan",
+        'Africa/Kigali': " Rwanda",
+        'Africa/Kinshasa': " DR Congo",
+        'Africa/Lagos': " Nigeria",
+        'Africa/Libreville': " Gabon",
+        'Africa/Lome': " Togo",
+        'Africa/Luanda': " Angola",
+        'Africa/Lubumbashi': " DR Congo",
+        'Africa/Lusaka': " Zambia",
+        'Africa/Malabo': " Equatorial Guinea",
+        'Africa/Maputo': " Mozambique",
+        'Africa/Maseru': " Lesotho",
+        'Africa/Mbabane': " Eswatini",
+        'Africa/Mogadishu': " Somalia",
+        'Africa/Monrovia': " Liberia",
+        'Africa/Nairobi': " Kenya",
+        'Africa/Ndjamena': " Chad",
+        'Africa/Niamey': " Niger",
+        'Africa/Nouakchott': " Mauritania",
+        'Africa/Ouagadougou': " Burkina Faso",
+        'Africa/Porto-Novo': " Benin",
+        'Africa/Sao_Tome': " Sao Tome and Principe",
+        'Africa/Tripoli': " Libya",
+        'Africa/Tunis': " Tunisia",
+        'Africa/Windhoek': " Namibia",
+        'America/New_York': " USA",
+        'America/Los_Angeles': " USA",
+        'America/Chicago': " USA",
+        'America/Denver': " USA",
+        'America/Anchorage': " USA",
+        'America/Phoenix': " USA",
+        'America/Toronto': " Canada",
+        'America/Vancouver': " Canada",
+        'America/Mexico_City': " Mexico",
+        'America/Sao_Paulo': " Brazil",
+        'America/Buenos_Aires': " Argentina",
+        'America/Santiago': " Chile",
+        'America/Bogota': " Colombia",
+        'America/Lima': " Peru",
+        'America/Caracas': " Venezuela",
+        'Europe/London': " UK",
+        'Europe/Paris': " France",
+        'Europe/Berlin': " Germany",
+        'Europe/Rome': " Italy",
+        'Europe/Madrid': " Spain",
+        'Europe/Moscow': " Russia",
+        'Asia/Tokyo': " Japan",
+        'Asia/Seoul': " South Korea",
+        'Asia/Shanghai': " China",
+        'Asia/Hong_Kong': " Hong Kong",
+        'Asia/Singapore': " Singapore",
+        'Asia/Dubai': " UAE",
+        'Asia/Bangkok': " Thailand",
+        'Asia/Jakarta': " Indonesia",
+        'Asia/Manila': " Philippines",
+        'Asia/Riyadh': " Saudi Arabia",
+        'Asia/Kolkata': " India",
+        'Australia/Sydney': " Australia",
+        'Australia/Melbourne': " Australia",
+        'Pacific/Auckland': " New Zealand"
+    };
+    
+    timezones.forEach(tz => {
+        const item = document.createElement('div');
+        item.className = 'tz-item';
+        item.setAttribute('data-tz', tz);
+        
+        // Get offset e.g., GMT +0:00
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            timeZoneName: 'longOffset',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        const parts = formatter.formatToParts(now);
+        const offset = parts.find(p => p.type === 'timeZoneName').value.replace('GMT', 'GMT ').replace('+', '+').replace('-', '-');
+        const timeStr = parts.filter(p => p.type !== 'timeZoneName').map(p => p.value).join('').trim();
+
+        // Derive city/region name
+        const city = tz.split('/').pop().replace(/_/g, ' ');
+        const country = tzToCountry[tz] || (" " + tz.split('/')[0].replace(/_/g, ' '));
+        
+        item.innerHTML = `
+            <span class="tz-item-info">${city}${country}, ${offset}</span>
+            <span class="tz-item-time">${timeStr}</span>
+        `;
+        item.onclick = () => selectTimeZone(tz, `${city}${country}`);
+        container.appendChild(item);
+    });
+}
+
+function filterTimeZoneList() {
+    const query = document.getElementById('tzSearchInput').value.toLowerCase();
+    const items = document.querySelectorAll('.tz-item');
+    items.forEach(item => {
+        if (item.textContent.toLowerCase().includes(query)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+async function selectTimeZone(tz, label) {
+    closeTimeZoneModal();
+    
+    // Feedback on button while loading
+    const openBtn = document.getElementById('openTimeZoneBtn');
+    const originalContent = openBtn.textContent;
+    openBtn.textContent = '...';
+    openBtn.disabled = true;
+
+    try {
+        // To get weather "degree", we need coordinates
+        // Extract the city/country name from the timezone string
+        const parts = label.split('/');
+        const query = parts[parts.length - 1].replace(/_/g, ' ');
+        
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const geoData = await geoRes.json();
+        
+        let lat = 0, lon = 0, cityName = query;
+        if (geoData && geoData.length > 0) {
+            lat = parseFloat(geoData[0].lat);
+            lon = parseFloat(geoData[0].lon);
+            cityName = geoData[0].display_name.split(',')[0];
+            
+            // Zoom the globe to this location
+            if (earthScene) {
+                zoomToLocation(lat, lon);
+            }
+        }
+
+        // Get current weather
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
+        const weatherData = await weatherRes.json();
+        const temp = Math.round(weatherData.current.temperature_2m);
+        const weather_code = weatherData.current.weather_code;
+
+        const newCity = {
+            name: cityName,
+            lat: lat,
+            lon: lon,
+            timezone: tz,
+            temp: temp,
+            weather_code: weather_code
+        };
+
+        // Add to list if not already present
+        if (!worldClockCities.some(c => c.timezone === tz && c.name === cityName)) {
+            worldClockCities.push(newCity);
+            localStorage.setItem("worldClockCities", JSON.stringify(worldClockCities));
+            renderWorldClockList();
+        }
+    } catch (err) {
+        console.error("Error adding from A-Z list:", err);
+    } finally {
+        openBtn.textContent = originalContent;
+        openBtn.disabled = false;
+    }
+}
+
 updateClockDisplay();
+renderWorldClockList();
 hideAlarmNotification();
-setInterval(updateClockDisplay, 1000);
+setInterval(() => {
+    updateClockDisplay();
+    renderWorldClockList();
+    
+    // Also update selection list times if modal is visible
+    const modal = document.getElementById('timeZoneModal');
+    if (modal && modal.style.display === 'flex') {
+        // We only update times of visible items for performance
+        const items = document.querySelectorAll('.tz-item');
+        const now = new Date();
+        items.forEach(item => {
+            const tz = item.getAttribute('data-tz');
+            if (tz) {
+                const timeEl = item.querySelector('.tz-item-time');
+                if (timeEl) {
+                    const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: tz === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : tz,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    timeEl.textContent = formatter.format(now);
+                }
+            }
+        });
+    }
+}, 1000);
 
 // 3D Earth renderer - initialize after DOM loads
 document.addEventListener('DOMContentLoaded', init3DEarth);
@@ -510,6 +876,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
   const strayNodes = Array.from(body.childNodes).filter(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
   strayNodes.forEach(node => node.remove());
+  
+  // Close timezone modal when clicking outside
+  window.addEventListener('click', (event) => {
+      const modal = document.getElementById('timeZoneModal');
+      if (event.target === modal) {
+          closeTimeZoneModal();
+      }
+  });
 });
 
 renderAlarms();
@@ -552,6 +926,7 @@ function showWeatherError(msg) {
 
 async function fetchWeather(lat, lon, locationName = null) {
     try {
+        // Open-Meteo is a free, high-quality weather API that doesn't require an API key.
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`;
         
         const response = await fetch(url);
@@ -576,6 +951,7 @@ function displayWeather(data, locationName = null) {
     const current = data.current;
     const daily = data.daily;
     
+    document.getElementById('weatherMainIcon').innerHTML = getWeatherIcon(current.weather_code, true);
     document.getElementById('weatherTemp').textContent = Math.round(current.temperature_2m);
     document.getElementById('weatherDesc').textContent = getWeatherDescription(current.weather_code);
     document.getElementById('weatherHumidity').textContent = current.relative_humidity_2m;
@@ -635,16 +1011,19 @@ function getWeatherDescription(code) {
     return weatherCodes[code] || 'Unknown';
 }
 
-function getWeatherIcon(code) {
-    if (code === 0) return '☀️';
-    if (code >= 1 && code <= 3) return '⛅';
-    if (code >= 45 && code <= 48) return '🌫️';
-    if (code >= 51 && code <= 55) return '🌧️';
-    if (code >= 61 && code <= 65) return '🌧️';
-    if (code >= 71 && code <= 75) return '❄️';
-    if (code >= 80 && code <= 82) return '🌦️';
-    if (code >= 95) return '⛈️';
-    return '🌤️';
+function getWeatherIcon(code, isMain = false) {
+    const iconMap = {
+        0: 'c01d', 1: 'c02d', 2: 'c03d', 3: 'c04d',
+        45: 'a05d', 48: 'a05d',
+        51: 'd01d', 53: 'd02d', 55: 'd03d',
+        61: 'r01d', 63: 'r02d', 65: 'r03d',
+        71: 's01d', 73: 's02d', 75: 's03d',
+        80: 'r04d', 81: 'r05d', 82: 'r06d',
+        95: 't01d', 96: 't02d', 99: 't03d'
+    };
+    const iconCode = iconMap[code] || 'c02d';
+    const size = isMain ? 80 : 40;
+    return `<img src="https://www.weatherbit.io/static/img/icons/${iconCode}.png" width="${size}" height="${size}" alt="Weather" style="display:block; margin:0 auto;">`;
 }
 
 /* ---------- MAP ---------- */
@@ -813,8 +1192,8 @@ function init3DEarth() {
     const earthGeometry = new THREE.SphereGeometry(1.5, 64, 64);
     const earthMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            dayTexture: { value: new THREE.TextureLoader().load('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg') },
-            nightTexture: { value: new THREE.TextureLoader().load('https://unpkg.com/three-globe/example/img/earth-night.jpg') },
+            dayTexture: { value: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg') },
+            nightTexture: { value: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_lights_2048.png') },
             sunDirection: { value: new THREE.Vector3(0.5, 0, 0.5) }
         },
         vertexShader: `
@@ -850,7 +1229,7 @@ function init3DEarth() {
     // Clouds
     const cloudGeometry = new THREE.SphereGeometry(1.52, 64, 64);
     const cloudMaterial = new THREE.MeshPhongMaterial({
-        map: new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_2048.png'),
+        map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_clouds_2048.png'),
         transparent: true,
         opacity: 0.4
     });
@@ -860,7 +1239,7 @@ function init3DEarth() {
     // Country & State Borders
     const borderGeometry = new THREE.SphereGeometry(1.51, 64, 64);
     const borderMaterial = new THREE.MeshBasicMaterial({
-        map: new THREE.TextureLoader().load('https://unpkg.com/three-globe/example/img/earth-topology.png'),
+        map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_specular_2048.jpg'),
         transparent: true,
         opacity: 0.8
     });
@@ -1021,32 +1400,36 @@ function vector3ToLatLon(vector3) {
 }
 
 function updateMarker(lat, lon) {
-    if (!earthMarker) return;
+    if (!earthMarker || !earthMesh) return;
+    
+    // Disable auto rotate
+    autoRotate = false;
+    
     earthMarker.visible = true;
     const position = latLonToVector3(lat, lon, 1.55);
     earthMarker.position.copy(position);
     earthMarker.lookAt(0, 0, 0);
     
     // Rotate Earth to show location
-    const targetLon = -lon;
-    const targetLat = lat;
+    // Note: This is an approximation for centering the globe at (lat, lon)
+    const targetLon = -lon * (Math.PI / 180);
+    const targetLat = lat * (Math.PI / 180);
     
-    // Animate to location
+    // Animate to location with easing
     const startRotation = { x: earthMesh.rotation.x, y: earthMesh.rotation.y };
-    const targetRotation = { x: targetLat * 0.01, y: targetLon * (Math.PI / 180) };
-    
     let progress = 0;
+    
     const animateToLocation = setInterval(() => {
-        progress += 0.05;
+        progress += 0.04;
         if (progress >= 1) {
             clearInterval(animateToLocation);
             return;
         }
-        earthMesh.rotation.x = startRotation.x + (targetRotation.x - startRotation.x) * progress;
-        earthMesh.rotation.y = startRotation.y + (targetRotation.y - startRotation.y) * progress;
+        
+        const eased = 1 - Math.pow(1 - progress, 3);
+        earthMesh.rotation.x = startRotation.x + (targetLat * 0.5 - startRotation.x) * eased;
+        earthMesh.rotation.y = startRotation.y + (targetLon - startRotation.y) * eased;
     }, 16);
-    
-    // Auto-rotation disabled
 }
 
 let labelTimeout;
