@@ -133,7 +133,7 @@ function fetchIPLocation() {
         });
 }
 
-/* ---------- SECTION NAVIGATION ---------- */
+/* ---------- SECTION NAVIGATION --------- */
 function showSection(sectionId, event) {
 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
 document.querySelectorAll('.menu button').forEach(b => b.classList.remove('active'));
