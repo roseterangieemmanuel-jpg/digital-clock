@@ -969,17 +969,8 @@ button.stop-button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    border-left: 4px solid var(--accent);
-    transition: all 0.2s;
-}
-
-.world-clock-item:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateX(4px);
-    cursor: pointer;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .world-clock-info {
@@ -1007,12 +998,16 @@ button.stop-button:hover {
 }
 
 .delete-city-btn {
-    background: rgba(239, 68, 68, 0.2) !important;
-    color: #ef4444 !important;
-    padding: 6px 10px !important;
-    font-size: 0.8rem !important;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    border: none !important;
+    padding: 4px 8px !important;
+    font-size: 0.9rem !important;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 .delete-city-btn:hover {
-    background: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
 }
