@@ -2,11 +2,6 @@ let currentTimeZone = 'local';
 let alarms = JSON.parse(localStorage.getItem("alarms")) || [];
 let worldClockCities = JSON.parse(localStorage.getItem("worldClockCities")) || [];
 
-// Pre-populate with Abidjan as in the user's example if empty
-if (worldClockCities.length === 0) {
-    addInitialCity('Abidjan', 5.36, -4.00);
-}
-
 async function addInitialCity(name, lat, lon) {
     try {
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
@@ -187,8 +182,7 @@ function formatWorldClockTime(timezone) {
     let minute = parts.find(p => p.type === 'minute').value;
     let dayPeriod = parts.find(p => p.type === 'dayPeriod').value;
     
-    // User wants "!!:34 Am" format. The !! is literal.
-    return `!!:${minute} ${dayPeriod.charAt(0).toUpperCase()}${dayPeriod.charAt(1).toLowerCase()}`;
+    return `${hour}:${minute} ${dayPeriod}`;
 }
 
 function getTimeOffsetDescription(timezone) {
@@ -258,7 +252,7 @@ function renderWorldClockList() {
             <div class="world-clock-info">
                 <span class="world-clock-city">${city.name}, ${gmtStr}</span>
                 <span class="world-clock-details">
-                    ${city.temp}° ${month} ${day}, ${offsetStr} ${timeStr}
+                    ${city.temp}° ${month} ${day}, ${offsetStr} <span class="world-clock-time">${timeStr}</span>
                 </span>
             </div>
             <button class="delete-city-btn" onclick="removeWorldClockCity(${index})">Delete</button>
