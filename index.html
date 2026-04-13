@@ -97,7 +97,7 @@
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
                         <button id="showAlarmFormButton" onclick="showAlarmForm()">Add New Alarm</button>
                     </div>
-                    <divit
+                    <div id="alarmForm" style="display:none;">
                         <button id="alarmBackBtn"
                             style="display:none; margin-bottom:8px; background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25);"
                             onclick="cancelEditAlarm()">Back</button>
@@ -109,9 +109,7 @@
                                 <option value="audio/Otlum Peejay Dela Cruz Nagmumura.mp3">Otlum Peejay</option>
                                 <option value="audio/Screen Recording.mp3">Screen Recording</option>
                                 <option value="audio/TikTok Sound.mp3">TikTok Sound</option>
-                                <option
-                                    value="audio/🗣️ Enrique Meme Sound Effect (Original and Slowed Version) No Copyright [sDaZSyrlPN4].mp3">
-                                    Enrique Meme Sound Effect</option>
+                                <option value="audio/Enrique-Meme.mp3">Enrique Meme</option>
                             </select>
                         </label><br>
                         <label>Repeat daily:<input type="checkbox" id="alarmRepeat"></label><br>
@@ -163,8 +161,9 @@
                         <button onclick="startTimer()">Start</button>
                         <button class="stop-button" onclick="stopTimer()">Stop</button>
                         <button onclick="restartTimer()">Restart</button>
+                        <button onclick="resetTimer()">Reset</button>
                     </div>
-                    <h3 id="timerDisplay">00:00:00</h3>
+                    <div id="timerDisplay" style="text-align:center;">00:00:00</div>
                 </div>
             </div>
         </div>
@@ -174,11 +173,11 @@
             <div class="container">
                 <div class="card">
                     <h2>Stopwatch</h2>
-                    <h3 id="swDisplay">00:00:000</h3>
                     <button onclick="startSW()">Start</button>
                     <button class="stop-button" onclick="stopSW()">Stop</button>
                     <button onclick="resetSW()">Reset</button>
                     <button onclick="lapSW()">Lap</button>
+                    <div id="swDisplay" style="text-align:center;">00:00:000</div>
                     <ul id="lapList"></ul>
                 </div>
             </div>

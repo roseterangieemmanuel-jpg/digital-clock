@@ -531,6 +531,7 @@ h1 {
     gap: 20px;
     max-width: 400px;
     margin: auto;
+    text-align: center;
 }
 
 .card {
@@ -543,6 +544,7 @@ h1 {
         0 0 30px rgba(0, 255, 255, 0.1),
         0 20px 40px rgba(0, 0, 0, 0.4);
     transition: all 0.3s ease;
+    text-align: center;
 }
 
 .card h2 {
@@ -553,6 +555,7 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 0.15em;
     text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    text-align: center;
 }
 
 .card:hover {
@@ -579,12 +582,6 @@ button {
     letter-spacing: 0.05em;
 }
 
-button:hover {
-    background: var(--accent);
-    color: var(--bg);
-    box-shadow: var(--glow-cyan);
-}
-
 button[onclick*="restart"],
 button[onclick*="restartTimer"],
 button[onclick*="resetSW"] {
@@ -604,7 +601,7 @@ button[onclick*="lapSW"] {
 }
 
 button[onclick*="lapSW"]:hover {
-    background: #9333ea;
+    background: #a855f7;
 }
 
 button[onclick*="snooze"] {
@@ -623,6 +620,14 @@ button.stop-button {
 
 button.stop-button:hover {
     background: #dc2626;
+}
+
+.timer-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
 }
 
 .timer-inputs input {
@@ -648,18 +653,26 @@ button.stop-button:hover {
     font-size: 3rem;
     font-weight: bold;
     color: var(--accent-tertiary);
-    margin: 20px 0;
+    margin: 20px auto !important;
     text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
     font-family: 'Orbitron', monospace;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    float: none !important;
 }
 
 #swDisplay {
     font-size: 3rem;
     font-weight: bold;
     color: var(--accent-secondary);
-    margin: 20px 0;
+    margin: 20px auto !important;
     text-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
     font-family: 'Orbitron', monospace;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    float: none !important;
 }
 
 .card button {
@@ -676,7 +689,6 @@ button.stop-button:hover {
 
 .card button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
 }
 
 .card button[onclick*="Restart"],

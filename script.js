@@ -164,6 +164,9 @@ function removeWorldClockCity(index) {
     worldClockCities.splice(index, 1);
     localStorage.setItem("worldClockCities", JSON.stringify(worldClockCities));
     renderWorldClockList();
+    
+    // Keep marker visible even after city is removed from list
+    // Marker stays on globe until a new city is clicked
 }
 
 function formatWorldClockTime(timezone) {
@@ -513,6 +516,15 @@ function updateTimerDisplay() {
 function stopTimer() {
   timerRunning = false;
   clearInterval(timerInterval);
+}
+
+function resetTimer() {
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById("timerDisplay").innerText = "00:00:00";
+  document.getElementById("timerHours").value = "";
+  document.getElementById("timerMin").value = "";
+  document.getElementById("timerSec").value = "";
 }
 
 function playTimerSound() {
@@ -1301,17 +1313,11 @@ function init3DEarth() {
     earthScene.add(earthAtmosphere);
     
     // Location marker - add as child of earthMesh so it rotates with the earth
-    const markerGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+    const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16);
     const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     earthMarker = new THREE.Mesh(markerGeometry, markerMaterial);
     earthMarker.visible = false;
     earthMesh.add(earthMarker);
-    
-    // Marker ring
-    const ringGeometry = new THREE.RingGeometry(0.05, 0.07, 32);
-    const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-    const markerRing = new THREE.Mesh(ringGeometry, ringMaterial);
-    earthMarker.add(markerRing);
     
     // Marker label
     const labelDiv = document.createElement('div');
@@ -1343,7 +1349,7 @@ function init3DEarth() {
         });
     }
     
-    // Mouse controls
+    // Mouse controls - can drag to rotate globe
     canvas.addEventListener('mousedown', (e) => { isDragging = true; });
     canvas.addEventListener('mouseup', () => { isDragging = false; });
     canvas.addEventListener('mousemove', (e) => {
@@ -1385,7 +1391,19 @@ function init3DEarth() {
                     const latLon = vector3ToLatLon(point);
                     currentLat = latLon.lat;
                     currentLon = latLon.lon;
-                    updateMarker(currentLat, currentLon);
+                    // Just show marker without spinning
+                    if (earthMarker && earthMesh) {
+                        earthMarker.visible = true;
+                        earthMarker.scale.setScalar(1);
+                        const markerRadius = 1.52;
+                        const phi = (90 - currentLat) * (Math.PI / 180);
+                        const theta = (currentLon + 180) * (Math.PI / 180);
+                        earthMarker.position.set(
+                            -markerRadius * Math.sin(phi) * Math.cos(theta),
+                            markerRadius * Math.cos(phi),
+                            markerRadius * Math.sin(phi) * Math.sin(theta)
+                        );
+                    }
                     
                     // Show loading in label
                     showCoordinates(currentLat, currentLon, 'Loading location...');
@@ -1406,7 +1424,7 @@ function init3DEarth() {
         earthCamera.position.z = Math.max(2, Math.min(10, earthCamera.position.z + (e.deltaY > 0 ? zoomSpeed : -zoomSpeed)));
     }, { passive: false });
     
-    // Touch controls
+    // Touch controls - can drag to rotate globe
     canvas.addEventListener('touchstart', (e) => { isDragging = true; });
     canvas.addEventListener('touchend', () => { isDragging = false; });
     canvas.addEventListener('touchmove', (e) => {
@@ -1454,10 +1472,8 @@ function updateMarker(lat, lon) {
         markerRadius * Math.sin(phi) * Math.sin(theta)
     );
     
-    // Calculate rotation - convert longitude to radians
-    // Adjust for texture orientation (add PI/2 offset to center properly)
-    const TEXTURE_OFFSET = Math.PI * 0.25; // Calibration offset for texture orientation
-    const targetRotY = lon * (Math.PI / 180) + TEXTURE_OFFSET;
+    // Calculate rotation - negative works for all cities
+    const targetRotY = -lon * (Math.PI / 180);
     const targetRotX = 0;
     
     const startRotX = earthMesh.rotation.x;
@@ -1481,6 +1497,8 @@ function updateMarker(lat, lon) {
                 cloudMesh.rotation.y = targetRotY;
                 cloudMesh.rotation.x = 0;
             }
+            // Re-enable dragging after animation ends
+            autoRotate = false;
             return;
         }
         
