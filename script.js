@@ -240,10 +240,14 @@ function renderWorldClockList() {
         li.className = "world-clock-item";
         li.style.cursor = "pointer"; // Indicate clickability
         li.onclick = (e) => {
+            console.log('City clicked:', city.name, 'lat:', city.lat, 'lon:', city.lon);
             // Only zoom if not clicking the delete button
             if (!e.target.classList.contains('delete-city-btn')) {
                 if (city.lat !== undefined && city.lon !== undefined) {
+                    console.log('Calling zoomToLocation...');
                     zoomToLocation(city.lat, city.lon);
+                } else {
+                    console.log('ERROR: city lat/lon is undefined');
                 }
             }
         };
@@ -294,7 +298,13 @@ const timeZoneCoords = {
 };
 
 function zoomToLocation(lat, lon) {
-    if (!earthMesh || !earthCamera) return;
+    console.log('zoomToLocation called with lat:', lat, 'lon:', lon);
+    console.log('earthMesh:', !!earthMesh, 'earthCamera:', !!earthCamera);
+    
+    if (!earthMesh || !earthCamera) {
+        console.log('ERROR: earthMesh or earthCamera not ready');
+        return;
+    }
     
     // Hide auto rotate
     autoRotate = false;
@@ -805,9 +815,20 @@ async function selectTimeZone(tz, label) {
             lon = parseFloat(geoData[0].lon);
             cityName = geoData[0].display_name.split(',')[0];
             
-            // Zoom the globe to this location
-            if (earthScene) {
+            console.log('Got coords for', cityName, ':', lat, lon);
+            
+            // Zoom the globe to this location - check earthMesh instead of earthScene
+            if (earthMesh) {
+                console.log('earthMesh exists, calling zoomToLocation');
                 zoomToLocation(lat, lon);
+            } else {
+                console.log('WARNING: earthMesh not ready yet, will retry...');
+                // Retry after a short delay if globe not ready
+                setTimeout(() => {
+                    if (earthMesh) {
+                        zoomToLocation(lat, lon);
+                    }
+                }, 1000);
             }
         }
 
@@ -1153,8 +1174,13 @@ function latLonToVector3(lat, lon, radius) {
 }
 
 function init3DEarth() {
+    console.log('init3DEarth starting...');
     const canvas = document.getElementById('earthCanvas');
-    if (!canvas) return;
+    console.log('Canvas found:', !!canvas);
+    if (!canvas) {
+        console.log('ERROR: Canvas not found!');
+        return;
+    }
     
     const cities = [
         { name: 'New York', lat: 40.7128, lon: -74.0060 },
@@ -1228,6 +1254,7 @@ function init3DEarth() {
     });
     earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
     earthScene.add(earthMesh);
+    console.log('earthMesh created successfully');
 
     // Clouds
     const cloudGeometry = new THREE.SphereGeometry(1.52, 64, 64);
@@ -1273,12 +1300,12 @@ function init3DEarth() {
     earthAtmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     earthScene.add(earthAtmosphere);
     
-    // Location marker
-    const markerGeometry = new THREE.SphereGeometry(0.04, 16, 16);
+    // Location marker - add as child of earthMesh so it rotates with the earth
+    const markerGeometry = new THREE.SphereGeometry(0.05, 16, 16);
     const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     earthMarker = new THREE.Mesh(markerGeometry, markerMaterial);
     earthMarker.visible = false;
-    earthScene.add(earthMarker);
+    earthMesh.add(earthMarker);
     
     // Marker ring
     const ringGeometry = new THREE.RingGeometry(0.05, 0.07, 32);
@@ -1403,36 +1430,85 @@ function vector3ToLatLon(vector3) {
 }
 
 function updateMarker(lat, lon) {
-    if (!earthMarker || !earthMesh) return;
+    console.log('updateMarker called with lat:', lat, 'lon:', lon);
     
-    // Disable auto rotate
+    if (!earthMarker || !earthMesh) {
+        console.log('ERROR: earthMarker or earthMesh not ready');
+        return;
+    }
+    
     autoRotate = false;
     
+    // Make marker visible - it's a child of earthMesh so rotates with it
     earthMarker.visible = true;
-    const position = latLonToVector3(lat, lon, 1.55);
-    earthMarker.position.copy(position);
-    earthMarker.lookAt(0, 0, 0);
+    earthMarker.scale.setScalar(1);
+    earthMarker.material.color.setHex(0xff0000);
     
-    // Rotate Earth to show location
-    // Note: This is an approximation for centering the globe at (lat, lon)
-    const targetLon = -lon * (Math.PI / 180);
-    const targetLat = lat * (Math.PI / 180);
+    // Set marker position on the globe surface
+    const markerRadius = 1.52; // Slightly above earth surface
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = (lon + 180) * (Math.PI / 180);
+    earthMarker.position.set(
+        -markerRadius * Math.sin(phi) * Math.cos(theta),
+        markerRadius * Math.cos(phi),
+        markerRadius * Math.sin(phi) * Math.sin(theta)
+    );
     
-    // Animate to location with easing
-    const startRotation = { x: earthMesh.rotation.x, y: earthMesh.rotation.y };
+    // Calculate rotation - convert longitude to radians
+    // Adjust for texture orientation (add PI/2 offset to center properly)
+    const TEXTURE_OFFSET = Math.PI * 0.25; // Calibration offset for texture orientation
+    const targetRotY = lon * (Math.PI / 180) + TEXTURE_OFFSET;
+    const targetRotX = 0;
+    
+    const startRotX = earthMesh.rotation.x;
+    const startRotY = earthMesh.rotation.y;
+    
+    // Add 2 full spins for dramatic effect
+    const fullSpins = 4 * Math.PI;
+    const targetRotYSpun = targetRotY + fullSpins;
+    
     let progress = 0;
+    const duration = 40; // frames
+    const intervalTime = 16;
     
     const animateToLocation = setInterval(() => {
-        progress += 0.04;
-        if (progress >= 1) {
+        progress++;
+        if (progress >= duration) {
             clearInterval(animateToLocation);
+            earthMesh.rotation.y = targetRotY;
+            earthMesh.rotation.x = 0;
+            if (cloudMesh) {
+                cloudMesh.rotation.y = targetRotY;
+                cloudMesh.rotation.x = 0;
+            }
             return;
         }
         
-        const eased = 1 - Math.pow(1 - progress, 3);
-        earthMesh.rotation.x = startRotation.x + (targetLat * 0.5 - startRotation.x) * eased;
-        earthMesh.rotation.y = startRotation.y + (targetLon - startRotation.y) * eased;
-    }, 16);
+        const t = progress / duration;
+        const eased = 1 - Math.pow(1 - t, 3);
+        
+        earthMesh.rotation.x = startRotX + (targetRotX - startRotX) * eased;
+        earthMesh.rotation.y = startRotY + (targetRotYSpun - startRotY) * eased;
+        
+        if (cloudMesh) {
+            cloudMesh.rotation.x = earthMesh.rotation.x;
+            cloudMesh.rotation.y = earthMesh.rotation.y;
+        }
+    }, intervalTime);
+    
+    // Pulse marker
+    if (earthMarker) {
+        let pulseProgress = 0;
+        const pulseInterval = setInterval(() => {
+            pulseProgress += 0.1;
+            if (pulseProgress >= 1) {
+                earthMarker.scale.setScalar(1);
+                clearInterval(pulseInterval);
+                return;
+            }
+            earthMarker.scale.setScalar(1 + 0.3 * Math.sin(pulseProgress * Math.PI));
+        }, 50);
+    }
 }
 
 let labelTimeout;
